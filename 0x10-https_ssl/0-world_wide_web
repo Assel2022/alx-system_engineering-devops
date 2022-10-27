@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-# This bash script displays information about the subdomains
+# shellcheck disable=SC2086
+# display information about subdomains
 
-dns_info_analyzer() {
-	result=$(dig "$2"."$1" | grep -A1 'ANSWER SECTION'| tail -1 | awk '{print $4 " " $5}')
-	echo "$result" "$2" | awk '{print "The subdomain " $3 " is a " $1 " record and points to " $2}'
+display_info ()
+{
+    domain="$1"
+    subdomain="$2"
+    dig "$subdomain.$domain" | awk '/ANSWER SECTION:/{getline; printf "The subdomain %s is a %s record and points to %s\n", var, $4, $5}' var="$subdomain"
 }
 
-if [ "$#" == 2 ]
-then
-	dns_info_analyzer "$1" "$2"
-else
-	dns_info_analyzer "$1" "www"
-	dns_info_analyzer "$1" "lb-01"
-	dns_info_analyzer "$1" "web-01"
-	dns_info_analyzer "$1" "web-02"
-fi
+for subdomain in "www" "lb-01" "web-01" "web-02"
+do
+    if [ -z "$2" ] || [ "$2" == "$subdomain" ] ;
+    then
+	display_info "$1" "$subdomain"
+    fi
+done
